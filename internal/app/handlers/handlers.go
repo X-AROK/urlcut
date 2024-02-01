@@ -11,7 +11,7 @@ import (
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		goToId(w, r)
+		goToID(w, r)
 	} else if r.Method == http.MethodPost {
 		createShort(w, r)
 	} else {
@@ -27,7 +27,7 @@ func createShort(w http.ResponseWriter, r *http.Request) {
 	}
 	url := string(buff)
 
-	id := util.GenerateId(8)
+	id := util.GenerateID(8)
 	store.Set(id, url)
 
 	data := []byte("http://" + r.Host + "/" + id)
@@ -35,7 +35,7 @@ func createShort(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func goToId(w http.ResponseWriter, r *http.Request) {
+func goToID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/")
 	url, ok := store.Get(id)
 	if !ok {

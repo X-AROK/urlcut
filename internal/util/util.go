@@ -6,7 +6,7 @@ import (
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func GenerateId(n int) string {
+func GenerateID(n int) string {
 	res := make([]byte, n)
 	for i := range res {
 		res[i] = letters[rand.Intn(len(letters))]
