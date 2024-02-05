@@ -6,20 +6,21 @@ import (
 	"strings"
 
 	"github.com/X-AROK/urlcut/internal/app/store"
-	"github.com/X-AROK/urlcut/internal/util"
 )
 
-func MainHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		goToID(w, r)
-	} else if r.Method == http.MethodPost {
-		createShort(w, r)
-	} else {
-		http.Error(w, "Method not allowed", http.StatusBadRequest)
+func MainHandler(s store.Repository) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			goToID(w, r, s)
+		} else if r.Method == http.MethodPost {
+			createShort(w, r, s)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusBadRequest)
+		}
 	}
 }
 
-func createShort(w http.ResponseWriter, r *http.Request) {
+func createShort(w http.ResponseWriter, r *http.Request, s store.Repository) {
 	buff, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error in data", http.StatusBadRequest)
@@ -27,17 +28,16 @@ func createShort(w http.ResponseWriter, r *http.Request) {
 	}
 	url := string(buff)
 
-	id := util.GenerateID(8)
-	store.Set(id, url)
+	id := s.Add(url)
 
 	data := []byte("http://" + r.Host + "/" + id)
 	w.WriteHeader(http.StatusCreated)
 	w.Write(data)
 }
 
-func goToID(w http.ResponseWriter, r *http.Request) {
+func goToID(w http.ResponseWriter, r *http.Request, s store.Repository) {
 	id := strings.TrimPrefix(r.URL.Path, "/")
-	url, ok := store.Get(id)
+	url, ok := s.Get(id)
 	if !ok {
 		http.Error(w, "Id not found", http.StatusBadRequest)
 		return

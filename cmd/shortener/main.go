@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/X-AROK/urlcut/internal/app/handlers"
+	"github.com/X-AROK/urlcut/internal/app/store"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
 
 func run() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers.MainHandler)
+	mux.HandleFunc("/", handlers.MainHandler(store.NewMapStore()))
 
 	return http.ListenAndServe(":8080", mux)
 }
