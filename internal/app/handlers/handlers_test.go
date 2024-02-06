@@ -22,7 +22,6 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
@@ -37,7 +36,7 @@ func TestMainHandler(t *testing.T) {
 	type send struct {
 		method string
 		path   string
-		body   string
+		data   string
 	}
 	type want struct {
 		code     int
@@ -54,7 +53,7 @@ func TestMainHandler(t *testing.T) {
 			send: send{
 				method: http.MethodPost,
 				path:   "/",
-				body:   "https://practicum.yandex.ru",
+				data:   "https://practicum.yandex.ru",
 			},
 			want: want{
 				code:     http.StatusCreated,
@@ -67,7 +66,7 @@ func TestMainHandler(t *testing.T) {
 			send: send{
 				method: http.MethodGet,
 				path:   "/test",
-				body:   "",
+				data:   "",
 			},
 			want: want{
 				code:     http.StatusTemporaryRedirect,
@@ -82,7 +81,7 @@ func TestMainHandler(t *testing.T) {
 			send: send{
 				method: http.MethodPut,
 				path:   "/",
-				body:   "",
+				data:   "",
 			},
 			want: want{
 				code:     http.StatusMethodNotAllowed,
@@ -95,7 +94,7 @@ func TestMainHandler(t *testing.T) {
 			send: send{
 				method: http.MethodGet,
 				path:   "/test2",
-				body:   "",
+				data:   "",
 			},
 			want: want{
 				code:     http.StatusBadRequest,
@@ -106,10 +105,12 @@ func TestMainHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, body := testRequest(t, ts, tt.send.method, tt.send.path, tt.send.body)
+			res, get := testRequest(t, ts, tt.send.method, tt.send.path, tt.send.data)
+
+			defer res.Body.Close()
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
-			assert.Equal(t, tt.want.response, body)
+			assert.Equal(t, tt.want.response, get)
 
 			for header, value := range tt.want.headers {
 				h := res.Header.Get(header)
