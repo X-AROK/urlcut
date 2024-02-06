@@ -14,8 +14,8 @@ func main() {
 }
 
 func run() error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers.MainHandler(store.NewMapStore()))
+	s := store.NewMapStore()
+	r := handlers.MainRouter(s)
 
-	return http.ListenAndServe(":8080", mux)
+	return http.ListenAndServe(":8080", r)
 }

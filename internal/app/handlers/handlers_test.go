@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/X-AROK/urlcut/internal/app/store"
@@ -12,8 +12,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body string) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, bytes.NewBuffer([]byte(body)))
+	require.NoError(t, err)
+	client := ts.Client()
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
+}
+
 func TestMainHandler(t *testing.T) {
-	handler := MainHandler(store.NewMockStore())
+	s := store.NewMockStore()
+	ts := httptest.NewServer(MainRouter(s))
 
 	type send struct {
 		method string
@@ -39,7 +58,7 @@ func TestMainHandler(t *testing.T) {
 			},
 			want: want{
 				code:     http.StatusCreated,
-				response: "http://example.com/test",
+				response: ts.URL + "/test",
 				headers:  map[string]string{},
 			},
 		},
@@ -66,8 +85,8 @@ func TestMainHandler(t *testing.T) {
 				body:   "",
 			},
 			want: want{
-				code:     http.StatusBadRequest,
-				response: "Method not allowed\n",
+				code:     http.StatusMethodNotAllowed,
+				response: "",
 				headers:  map[string]string{},
 			},
 		},
@@ -87,24 +106,13 @@ func TestMainHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := strings.NewReader(tt.send.body)
-			req := httptest.NewRequest(tt.send.method, tt.send.path, b)
-			w := httptest.NewRecorder()
-
-			handler(w, req)
-
-			res := w.Result()
+			res, body := testRequest(t, ts, tt.send.method, tt.send.path, tt.send.body)
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
-
-			defer res.Body.Close()
-			body, err := io.ReadAll(res.Body)
-
-			require.NoError(t, err)
-			assert.Equal(t, tt.want.response, string(body))
+			assert.Equal(t, tt.want.response, body)
 
 			for header, value := range tt.want.headers {
-				h := w.Header().Get(header)
+				h := res.Header.Get(header)
 				assert.Equal(t, value, h)
 			}
 		})
