@@ -9,17 +9,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func MainRouter(s store.Repository) chi.Router {
+func MainRouter(s store.Repository, baseURL string) chi.Router {
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", createShort(s))
+		r.Post("/", createShort(s, baseURL))
 		r.Get("/{id}", goToID(s))
 	})
 
 	return r
 }
 
-func createShort(s store.Repository) func(http.ResponseWriter, *http.Request) {
+func createShort(s store.Repository, baseURL string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		buff, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -30,7 +30,7 @@ func createShort(s store.Repository) func(http.ResponseWriter, *http.Request) {
 
 		id := s.Add(url)
 
-		data := []byte("http://" + r.Host + "/" + id)
+		data := []byte(baseURL + "/" + id)
 		w.WriteHeader(http.StatusCreated)
 		w.Write(data)
 	}

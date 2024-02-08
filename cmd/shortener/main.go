@@ -3,19 +3,22 @@ package main
 import (
 	"net/http"
 
+	"github.com/X-AROK/urlcut/internal/app/config"
 	"github.com/X-AROK/urlcut/internal/app/handlers"
 	"github.com/X-AROK/urlcut/internal/app/store"
 )
 
 func main() {
-	if err := run(); err != nil {
+	config.ParseFlags()
+
+	if err := run(config.Addr, config.BaseURL); err != nil {
 		panic(err)
 	}
 }
 
-func run() error {
+func run(addr, baseURL string) error {
 	s := store.NewMapStore()
-	r := handlers.MainRouter(s)
+	r := handlers.MainRouter(s, baseURL)
 
-	return http.ListenAndServe(":8080", r)
+	return http.ListenAndServe(addr, r)
 }

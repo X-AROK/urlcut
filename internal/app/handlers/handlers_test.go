@@ -31,7 +31,8 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 
 func TestMainHandler(t *testing.T) {
 	s := store.NewMockStore()
-	ts := httptest.NewServer(MainRouter(s))
+	baseURL := "http://localhost:8000"
+	ts := httptest.NewServer(MainRouter(s, baseURL))
 
 	type send struct {
 		method string
@@ -57,7 +58,7 @@ func TestMainHandler(t *testing.T) {
 			},
 			want: want{
 				code:     http.StatusCreated,
-				response: ts.URL + "/test",
+				response: baseURL + "/test",
 				headers:  map[string]string{},
 			},
 		},
