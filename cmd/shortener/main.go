@@ -9,9 +9,10 @@ import (
 )
 
 func main() {
-	config.ParseFlags()
+	c := config.New()
+	config.ParseFlags(&c)
 
-	if err := run(config.Addr, config.BaseURL); err != nil && err != http.ErrServerClosed {
+	if err := run(c.Addr, c.BaseURL); err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
 }
