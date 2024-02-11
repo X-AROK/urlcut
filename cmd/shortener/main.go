@@ -11,7 +11,7 @@ import (
 func main() {
 	config.ParseFlags()
 
-	if err := run(config.Addr, config.BaseURL); err != nil {
+	if err := run(config.Addr, config.BaseURL); err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
 }
