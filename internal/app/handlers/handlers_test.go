@@ -32,7 +32,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 func TestMainHandler(t *testing.T) {
 	s := store.NewMockStore()
 	baseURL := "http://localhost:8000"
-	ts := httptest.NewServer(MainRouter(s, baseURL))
+	ts := httptest.NewServer(MainRouter(&s, baseURL))
 
 	type send struct {
 		method string

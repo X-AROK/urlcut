@@ -19,7 +19,7 @@ func main() {
 
 func run(addr, baseURL string) error {
 	s := store.NewMapStore()
-	r := handlers.MainRouter(s, baseURL)
+	r := handlers.MainRouter(&s, baseURL)
 
 	return http.ListenAndServe(addr, r)
 }
