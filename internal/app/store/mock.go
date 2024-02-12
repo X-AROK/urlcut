@@ -6,12 +6,12 @@ func NewMockStore() MockStore {
 	return MockStore{}
 }
 
-func (s MockStore) Get(id string) (string, bool) {
+func (s MockStore) Get(id string) (string, error) {
 	if id == "test" {
-		return "https://practicum.yandex.ru", true
+		return "https://practicum.yandex.ru", nil
 	}
 
-	return "", false
+	return "", ErrorNotFound
 }
 
 func (s MockStore) Add(_ string) string {

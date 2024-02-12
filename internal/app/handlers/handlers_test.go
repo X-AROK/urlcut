@@ -99,7 +99,7 @@ func TestMainHandler(t *testing.T) {
 			},
 			want: want{
 				code:     http.StatusBadRequest,
-				response: "Id not found\n",
+				response: "id not found\n",
 				headers:  map[string]string{},
 			},
 		},

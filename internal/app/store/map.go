@@ -10,9 +10,12 @@ func NewMapStore() MapStore {
 	return MapStore{values: make(map[string]string)}
 }
 
-func (s MapStore) Get(id string) (string, bool) {
+func (s MapStore) Get(id string) (string, error) {
 	v, ok := s.values[id]
-	return v, ok
+	if !ok {
+		return v, ErrorNotFound
+	}
+	return v, nil
 }
 
 func (s MapStore) Add(v string) string {
