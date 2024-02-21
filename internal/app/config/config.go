@@ -1,8 +1,9 @@
 package config
 
 type Config struct {
-	Addr    string
-	BaseURL string
+	Addr        string
+	BaseURL     string
+	LoggerLevel string
 }
 
 type ConfigBuilder struct {
@@ -20,6 +21,11 @@ func (cb *ConfigBuilder) WithAddr(addr string) *ConfigBuilder {
 
 func (cb *ConfigBuilder) WithBaseURL(baseURL string) *ConfigBuilder {
 	cb.conf.BaseURL = baseURL
+	return cb
+}
+
+func (cb *ConfigBuilder) WithLoggerLevel(level string) *ConfigBuilder {
+	cb.conf.LoggerLevel = level
 	return cb
 }
 
