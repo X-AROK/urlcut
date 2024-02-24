@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -18,6 +19,9 @@ func MainRouter(s url.Repository, baseURL string) chi.Router {
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", createShort(m, baseURL))
 		r.Get("/{id}", goToID(m))
+		r.Route("/api", func(r chi.Router) {
+			r.Post("/shorten", shorten(m, baseURL))
+		})
 	})
 
 	return r
@@ -56,5 +60,34 @@ func goToID(m *url.Manager) func(http.ResponseWriter, *http.Request) {
 		}
 
 		http.Redirect(w, r, url.Addr, http.StatusTemporaryRedirect)
+	}
+}
+
+func shorten(m *url.Manager, baseURL string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		var u url.URL
+		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		id, err := m.AddURL(u)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		res := url.NewResult(baseURL + "/" + id)
+		resp, err := json.Marshal(res)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
 	}
 }
