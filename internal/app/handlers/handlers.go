@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/X-AROK/urlcut/internal/app/compress"
 	"github.com/X-AROK/urlcut/internal/app/logger"
 	"github.com/X-AROK/urlcut/internal/app/url"
 	"github.com/go-chi/chi/v5"
@@ -15,7 +16,7 @@ func MainRouter(s url.Repository, baseURL string) chi.Router {
 	m := url.NewManager(s)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer, logger.ResponseLogger, logger.RequestLogger)
+	r.Use(middleware.Recoverer, logger.ResponseLogger, logger.RequestLogger, compress.GzipMiddleware)
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", createShort(m, baseURL))
 		r.Get("/{id}", goToID(m))
