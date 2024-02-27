@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var encoding_types []string = []string{
+var encodingTypes []string = []string{
 	"text/html",
 	"application/json",
 }
@@ -25,9 +25,9 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 }
 
 func (c *gzipWriter) needsEncoding() bool {
-	content_type := c.Header().Get("Content-Type")
-	for _, t := range encoding_types {
-		if strings.Contains(content_type, t) {
+	contentType := c.Header().Get("Content-Type")
+	for _, t := range encodingTypes {
+		if strings.Contains(contentType, t) {
 			return true
 		}
 	}
