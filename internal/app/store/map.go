@@ -12,8 +12,8 @@ type MapStore struct {
 	values map[string]url.URL
 }
 
-func NewMapStore() MapStore {
-	return MapStore{values: make(map[string]url.URL)}
+func NewMapStore() *MapStore {
+	return &MapStore{values: make(map[string]url.URL)}
 }
 
 func (s *MapStore) Get(id string) (url.URL, error) {
@@ -27,10 +27,10 @@ func (s *MapStore) Get(id string) (url.URL, error) {
 	return v, nil
 }
 
-func (s *MapStore) Add(v url.URL) string {
+func (s *MapStore) Add(v url.URL) (string, error) {
 	id := util.GenerateID(8)
 	s.mx.Lock()
 	s.values[id] = v
 	s.mx.Unlock()
-	return id
+	return id, nil
 }

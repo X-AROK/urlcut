@@ -15,10 +15,13 @@ func NewConfigFromFlags() Config {
 	var level string
 	flag.StringVar(&level, "l", "info", "Уроввень логироввания")
 
+	var fileStoragePath string
+	flag.StringVar(&fileStoragePath, "f", "/tmp/short-url-db.json", "Файл хранилища")
+
 	flag.Parse()
 
 	builder := NewConfigBuilder()
-	builder.WithAddr(addr).WithBaseURL(baseURL).WithLoggerLevel(level)
+	builder.WithAddr(addr).WithBaseURL(baseURL).WithLoggerLevel(level).WithFileStorage(fileStoragePath)
 
 	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
 		builder.WithAddr(envAddr)
@@ -28,6 +31,9 @@ func NewConfigFromFlags() Config {
 	}
 	if envLevel := os.Getenv("LOG_LEVEL"); envLevel != "" {
 		builder.WithLoggerLevel(envLevel)
+	}
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		builder.WithFileStorage(envFileStoragePath)
 	}
 
 	return builder.Build()

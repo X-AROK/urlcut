@@ -9,7 +9,7 @@ func NewManager(s Repository) *Manager {
 }
 
 func (m *Manager) AddURL(u URL) (string, error) {
-	return m.s.Add(u), nil
+	return m.s.Add(u)
 }
 
 func (m *Manager) GetURL(id string) (URL, error) {
