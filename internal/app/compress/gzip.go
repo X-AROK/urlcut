@@ -51,9 +51,6 @@ func (c *gzipWriter) WriteHeader(statusCode int) {
 }
 
 func (c *gzipWriter) Close() error {
-	if !c.needsEncoding() {
-		return nil
-	}
 	return c.zw.Close()
 }
 
