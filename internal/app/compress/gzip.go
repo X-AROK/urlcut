@@ -4,36 +4,56 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"strings"
 )
 
+var encoding_types []string = []string{
+	"text/html",
+	"application/json",
+}
+
 type gzipWriter struct {
-	w  http.ResponseWriter
+	http.ResponseWriter
 	zw *gzip.Writer
 }
 
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 	return &gzipWriter{
-		w:  w,
-		zw: gzip.NewWriter(w),
+		ResponseWriter: w,
+		zw:             gzip.NewWriter(w),
 	}
 }
 
-func (c *gzipWriter) Header() http.Header {
-	return c.w.Header()
+func (c *gzipWriter) needsEncoding() bool {
+	content_type := c.Header().Get("Content-Type")
+	for _, t := range encoding_types {
+		if strings.Contains(content_type, t) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *gzipWriter) Write(p []byte) (int, error) {
+	if !c.needsEncoding() {
+		return c.ResponseWriter.Write(p)
+	}
+
 	return c.zw.Write(p)
 }
 
 func (c *gzipWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
-		c.w.Header().Set("Content-Encoding", "gzip")
+	if statusCode < 300 && c.needsEncoding() {
+		c.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	}
-	c.w.WriteHeader(statusCode)
+	c.ResponseWriter.WriteHeader(statusCode)
 }
 
 func (c *gzipWriter) Close() error {
+	if !c.needsEncoding() {
+		return nil
+	}
 	return c.zw.Close()
 }
 
