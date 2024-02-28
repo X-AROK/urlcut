@@ -20,7 +20,7 @@ type gzipWriter struct {
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 	return &gzipWriter{
 		ResponseWriter: w,
-		zw:             gzip.NewWriter(w),
+		zw:             nil,
 	}
 }
 
@@ -36,7 +36,7 @@ func (c *gzipWriter) needsEncoding() bool {
 }
 
 func (c *gzipWriter) Write(p []byte) (int, error) {
-	if !c.needsEncoding() {
+	if c.zw == nil {
 		return c.ResponseWriter.Write(p)
 	}
 
@@ -46,11 +46,16 @@ func (c *gzipWriter) Write(p []byte) (int, error) {
 func (c *gzipWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 && c.needsEncoding() {
 		c.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+		c.zw = gzip.NewWriter(c.ResponseWriter)
 	}
 	c.ResponseWriter.WriteHeader(statusCode)
 }
 
 func (c *gzipWriter) Close() error {
+	if c.zw == nil {
+		return nil
+	}
+
 	return c.zw.Close()
 }
 
