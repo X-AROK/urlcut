@@ -6,18 +6,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 
 	"github.com/X-AROK/urlcut/internal/app/url"
 	"github.com/X-AROK/urlcut/internal/util"
 )
-
-type fileRecord struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
 
 type fileWriter struct {
 	file    *os.File
@@ -36,8 +29,8 @@ func newFileWriter(fname string) (*fileWriter, error) {
 	}, nil
 }
 
-func (fw *fileWriter) WriteRecord(r *fileRecord) error {
-	return fw.encoder.Encode(r)
+func (fw *fileWriter) WriteRecord(url *url.URL) error {
+	return fw.encoder.Encode(url)
 }
 
 func (fw *fileWriter) Close() error {
@@ -46,34 +39,28 @@ func (fw *fileWriter) Close() error {
 
 type FileStore struct {
 	mx     sync.Mutex
-	values map[string]url.URL
+	values map[string]*url.URL
 	writer *fileWriter
-	lastID int
 }
 
-func (fs *FileStore) Add(v url.URL) (string, error) {
+func (fs *FileStore) Add(url *url.URL) (string, error) {
 	id := util.GenerateID(8)
 
-	record := &fileRecord{
-		UUID:        strconv.Itoa(fs.lastID + 1),
-		ShortURL:    id,
-		OriginalURL: v.Addr,
-	}
-	err := fs.writer.WriteRecord(record)
+	url.ShortURL = id
+	err := fs.writer.WriteRecord(url)
 
 	if err != nil {
 		return "", err
 	}
-	fs.lastID += 1
 
 	fs.mx.Lock()
-	fs.values[id] = v
+	fs.values[id] = url
 	fs.mx.Unlock()
 
 	return id, nil
 }
 
-func (fs *FileStore) Get(id string) (url.URL, error) {
+func (fs *FileStore) Get(id string) (*url.URL, error) {
 	fs.mx.Lock()
 	v, ok := fs.values[id]
 	fs.mx.Unlock()
@@ -91,27 +78,18 @@ func (fs *FileStore) parse(fname string) error {
 	}
 
 	decoder := json.NewDecoder(bytes.NewBuffer(data))
-	var record *fileRecord
+	var url *url.URL
 	fs.mx.Lock()
 	for {
-		err := decoder.Decode(&record)
+		err := decoder.Decode(&url)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return err
 		}
-		url := url.NewURL(record.OriginalURL)
-		fs.values[record.ShortURL] = url
+		fs.values[url.ShortURL] = url
 	}
 	fs.mx.Unlock()
-
-	if record != nil {
-		lastID, err := strconv.Atoi(record.UUID)
-		if err != nil {
-			return err
-		}
-		fs.lastID = lastID
-	}
 
 	return nil
 }
@@ -136,7 +114,7 @@ func NewFileStore(fname string) (*FileStore, error) {
 	}
 
 	fs := &FileStore{
-		values: make(map[string]url.URL),
+		values: make(map[string]*url.URL),
 		writer: writer,
 	}
 	if err := fs.parse(fname); err != nil {

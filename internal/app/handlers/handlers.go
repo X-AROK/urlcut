@@ -60,7 +60,7 @@ func goToID(m *url.Manager) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, url.Addr, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, url.OriginalURL, http.StatusTemporaryRedirect)
 	}
 }
 
@@ -68,19 +68,21 @@ func shorten(m *url.Manager, baseURL string) func(http.ResponseWriter, *http.Req
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var u url.URL
-		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		var req ShortenRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		id, err := m.AddURL(u)
+		u := url.NewURL(req.URL)
+		_, err := m.AddURL(u)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		println(u.ShortURL)
 
-		res := url.NewResult(baseURL + "/" + id)
+		res := NewShortenResponse(u, baseURL)
 		resp, err := json.Marshal(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

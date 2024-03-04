@@ -8,14 +8,15 @@ func NewMockStore() *MockStore {
 	return &MockStore{}
 }
 
-func (s MockStore) Get(id string) (url.URL, error) {
+func (s MockStore) Get(id string) (*url.URL, error) {
 	if id == "test" {
-		return url.NewURL("https://practicum.yandex.ru"), nil
+		return &url.URL{ShortURL: "test", OriginalURL: "https://practicum.yandex.ru"}, nil
 	}
 
-	return url.URL{}, url.ErrorNotFound
+	return &url.URL{}, url.ErrorNotFound
 }
 
-func (s MockStore) Add(_ url.URL) (string, error) {
+func (s MockStore) Add(u *url.URL) (string, error) {
+	u.ShortURL = "test"
 	return "test", nil
 }

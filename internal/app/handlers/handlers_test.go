@@ -188,7 +188,7 @@ func TestShortenHandler(t *testing.T) {
 			},
 			want: want{
 				code:     http.StatusBadRequest,
-				response: "json: cannot unmarshal array into Go struct field URL.url of type string\n",
+				response: "json: cannot unmarshal array into Go struct field ShortenRequest.url of type string\n",
 				headers:  map[string]string{},
 			},
 		},
