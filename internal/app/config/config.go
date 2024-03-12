@@ -5,6 +5,7 @@ type Config struct {
 	BaseURL         string
 	LoggerLevel     string
 	FileStorageFile string
+	DSN             string
 }
 
 type ConfigBuilder struct {
@@ -32,6 +33,11 @@ func (cb *ConfigBuilder) WithLoggerLevel(level string) *ConfigBuilder {
 
 func (cb *ConfigBuilder) WithFileStorage(path string) *ConfigBuilder {
 	cb.conf.FileStorageFile = path
+	return cb
+}
+
+func (cb *ConfigBuilder) WithDSN(dsn string) *ConfigBuilder {
+	cb.conf.DSN = dsn
 	return cb
 }
 
