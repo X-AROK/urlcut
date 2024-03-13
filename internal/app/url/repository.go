@@ -1,6 +1,8 @@
 package url
 
+import "context"
+
 type Repository interface {
-	Get(string) (*URL, error)
-	Add(*URL) (string, error)
+	Get(context.Context, string) (*URL, error)
+	Add(context.Context, *URL) (string, error)
 }

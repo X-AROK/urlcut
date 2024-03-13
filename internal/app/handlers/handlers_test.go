@@ -68,7 +68,7 @@ func runTests(t *testing.T, handler http.HandlerFunc, tests []test) {
 func TestCreateShortHandler(t *testing.T) {
 	m := url.NewManager(store.NewMockStore())
 	baseURL := "http://localhost:8000"
-	handler := createShort(m, baseURL)
+	handler := createShort(context.Background(), m, baseURL)
 
 	tests := []test{
 		{
@@ -92,7 +92,7 @@ func TestCreateShortHandler(t *testing.T) {
 
 func TestGoToIDHandler(t *testing.T) {
 	m := url.NewManager(store.NewMockStore())
-	handler := goToID(m)
+	handler := goToID(context.Background(), m)
 
 	tests := []test{
 		{
@@ -133,7 +133,7 @@ func TestGoToIDHandler(t *testing.T) {
 func TestShortenHandler(t *testing.T) {
 	m := url.NewManager(store.NewMockStore())
 	baseURL := "http://localhost:8000"
-	handler := shorten(m, baseURL)
+	handler := shorten(context.Background(), m, baseURL)
 
 	tests := []test{
 		{

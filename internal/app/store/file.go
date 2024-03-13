@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -43,7 +44,7 @@ type FileStore struct {
 	writer *fileWriter
 }
 
-func (fs *FileStore) Add(url *url.URL) (string, error) {
+func (fs *FileStore) Add(ctx context.Context, url *url.URL) (string, error) {
 	id := util.GenerateID(8)
 
 	url.ShortURL = id
@@ -60,7 +61,7 @@ func (fs *FileStore) Add(url *url.URL) (string, error) {
 	return id, nil
 }
 
-func (fs *FileStore) Get(id string) (*url.URL, error) {
+func (fs *FileStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	fs.mx.Lock()
 	v, ok := fs.values[id]
 	fs.mx.Unlock()

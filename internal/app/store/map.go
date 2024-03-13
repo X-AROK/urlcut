@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"sync"
 
 	"github.com/X-AROK/urlcut/internal/app/url"
@@ -16,7 +17,7 @@ func NewMapStore() *MapStore {
 	return &MapStore{values: make(map[string]*url.URL)}
 }
 
-func (s *MapStore) Get(id string) (*url.URL, error) {
+func (s *MapStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	s.mx.Lock()
 	v, ok := s.values[id]
 	s.mx.Unlock()
@@ -27,7 +28,7 @@ func (s *MapStore) Get(id string) (*url.URL, error) {
 	return v, nil
 }
 
-func (s *MapStore) Add(v *url.URL) (string, error) {
+func (s *MapStore) Add(ctx context.Context, v *url.URL) (string, error) {
 	id := util.GenerateID(8)
 	s.mx.Lock()
 	v.ShortURL = id

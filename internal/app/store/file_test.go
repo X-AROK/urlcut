@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"math/rand"
 	"os"
 	"testing"
@@ -25,6 +26,7 @@ func TestFileStore(t *testing.T) {
 	dir := os.TempDir()
 	fileStorePath := dir + string(os.PathSeparator) + TempFile()
 	var fs *FileStore
+	ctx := context.Background()
 	t.Run("create file", func(t *testing.T) {
 		store, err := NewFileStore(fileStorePath)
 		require.NoError(t, err)
@@ -36,7 +38,7 @@ func TestFileStore(t *testing.T) {
 		assert.Empty(t, data)
 	})
 	t.Run("add to file", func(t *testing.T) {
-		id, err := fs.Add(url.NewURL("https://practicum.yandex.ru"))
+		id, err := fs.Add(ctx, url.NewURL("https://practicum.yandex.ru"))
 		require.NoError(t, err)
 		assert.NotEmpty(t, id)
 
