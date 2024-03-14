@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"github.com/X-AROK/urlcut/internal/app/url"
 )
 
@@ -22,4 +23,13 @@ func (s MockStore) Get(ctx context.Context, id string) (*url.URL, error) {
 func (s MockStore) Add(ctx context.Context, u *url.URL) (string, error) {
 	u.ShortURL = "test"
 	return "test", nil
+}
+
+func (s MockStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
+	for k, v := range *urls {
+		id := fmt.Sprintf("test%s", k)
+		v.ShortURL = id
+	}
+
+	return nil
 }

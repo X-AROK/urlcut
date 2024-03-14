@@ -61,6 +61,17 @@ func (fs *FileStore) Add(ctx context.Context, url *url.URL) (string, error) {
 	return id, nil
 }
 
+func (fs *FileStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
+	for _, u := range *urls {
+		_, err := fs.Add(ctx, u)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (fs *FileStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	fs.mx.Lock()
 	v, ok := fs.values[id]

@@ -14,6 +14,10 @@ func (m *Manager) AddURL(ctx context.Context, u *URL) (string, error) {
 	return m.s.Add(ctx, u)
 }
 
+func (m *Manager) AddURLsBatch(ctx context.Context, urls *URLsBatch) error {
+	return m.s.AddBatch(ctx, urls)
+}
+
 func (m *Manager) GetURL(ctx context.Context, id string) (*URL, error) {
 	url, err := m.s.Get(ctx, id)
 	return url, err

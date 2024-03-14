@@ -36,3 +36,14 @@ func (s *MapStore) Add(ctx context.Context, v *url.URL) (string, error) {
 	s.mx.Unlock()
 	return id, nil
 }
+
+func (s *MapStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
+	for _, u := range *urls {
+		_, err := s.Add(ctx, u)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

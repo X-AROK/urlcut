@@ -3,10 +3,12 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/X-AROK/urlcut/internal/app/store"
@@ -55,7 +57,20 @@ func runTests(t *testing.T, handler http.HandlerFunc, tests []test) {
 			get := string(respBody)
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
-			assert.Equal(t, tt.want.response, get)
+
+			contentType := res.Header.Get("Content-Type")
+			if strings.Contains(contentType, "application/json") {
+				if strings.HasPrefix(get, "[") {
+					var exp, act any
+					require.NoError(t, json.Unmarshal([]byte(get), &act))
+					require.NoError(t, json.Unmarshal([]byte(tt.want.response), &exp))
+					assert.ElementsMatch(t, exp, act)
+				} else {
+					assert.JSONEq(t, tt.want.response, get)
+				}
+			} else {
+				assert.Equal(t, tt.want.response, get)
+			}
 
 			for header, value := range tt.want.headers {
 				h := res.Header.Get(header)
@@ -190,6 +205,59 @@ func TestShortenHandler(t *testing.T) {
 				code:     http.StatusBadRequest,
 				response: "json: cannot unmarshal array into Go struct field ShortenRequest.url of type string\n",
 				headers:  map[string]string{},
+			},
+		},
+	}
+
+	runTests(t, handler, tests)
+}
+
+func TestBatchHandler(t *testing.T) {
+	m := url.NewManager(store.NewMockStore())
+	baseURL := "http://localhost:8000"
+	handler := batch(context.Background(), m, baseURL)
+
+	tests := []test{
+		{
+			name: "create url",
+			send: send{
+				method:    http.MethodPost,
+				path:      "/",
+				data:      "[{\"correlation_id\": \"1\", \"original_url\": \"\"}]",
+				urlParams: map[string]string{},
+			},
+			want: want{
+				code:     http.StatusCreated,
+				response: fmt.Sprintf("[{\"correlation_id\": \"1\", \"short_url\": \"%s/test1\"}]", baseURL),
+				headers:  map[string]string{"Content-Type": "application/json"},
+			},
+		},
+		{
+			name: "create urls",
+			send: send{
+				method:    http.MethodPost,
+				path:      "/",
+				data:      "[{\"correlation_id\": \"1\", \"original_url\": \"https://practicum.yandex.ru\"}, {\"correlation_id\": \"2\", \"original_url\": \"https://vk.com\"}]",
+				urlParams: map[string]string{},
+			},
+			want: want{
+				code:     http.StatusCreated,
+				response: fmt.Sprintf("[{\"correlation_id\": \"1\", \"short_url\": \"%s/test1\"}, {\"correlation_id\": \"2\", \"short_url\": \"%[1]s/test2\"}]", baseURL),
+				headers:  map[string]string{"Content-Type": "application/json"},
+			},
+		},
+		{
+			name: "empty",
+			send: send{
+				method:    http.MethodPost,
+				path:      "/",
+				data:      "[]",
+				urlParams: map[string]string{},
+			},
+			want: want{
+				code:     http.StatusCreated,
+				response: "[]",
+				headers:  map[string]string{"Content-Type": "application/json"},
 			},
 		},
 	}

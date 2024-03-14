@@ -23,6 +23,7 @@ func MainRouter(ctx context.Context, s url.Repository, baseURL string) chi.Route
 		r.Get("/{id}", goToID(ctx, m))
 		r.Route("/api", func(r chi.Router) {
 			r.Post("/shorten", shorten(ctx, m, baseURL))
+			r.Post("/shorten/batch", batch(ctx, m, baseURL))
 		})
 	})
 
@@ -84,6 +85,36 @@ func shorten(ctx context.Context, m *url.Manager, baseURL string) func(http.Resp
 		println(u.ShortURL)
 
 		res := NewShortenResponse(u, baseURL)
+		resp, err := json.Marshal(res)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
+	}
+}
+
+func batch(ctx context.Context, m *url.Manager, baseURL string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		req := BatchRequest{}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		urls := req.ToURLs()
+		err := m.AddURLsBatch(ctx, urls)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		res := NewBatchResponse(urls, baseURL)
 		resp, err := json.Marshal(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

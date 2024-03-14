@@ -62,3 +62,27 @@ func (dbs *DBStore) Get(ctx context.Context, id string) (*url.URL, error) {
 
 	return u, nil
 }
+
+func (dbs *DBStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
+	tx, err := dbs.db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare("INSERT INTO urls (short, original) VALUES ($1, $2)")
+	if err != nil {
+		return err
+	}
+
+	for _, v := range *urls {
+		id := util.GenerateID(8)
+		_, err := stmt.ExecContext(ctx, id, v.OriginalURL)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		v.ShortURL = id
+	}
+	tx.Commit()
+
+	return nil
+}
