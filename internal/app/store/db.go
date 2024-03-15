@@ -3,8 +3,11 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/X-AROK/urlcut/internal/app/url"
 	"github.com/X-AROK/urlcut/internal/util"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"time"
 )
 
@@ -23,20 +26,29 @@ func NewDBStore(db *sql.DB) (*DBStore, error) {
 }
 
 func (dbs *DBStore) createTables() error {
-	_, err := dbs.db.Exec("CREATE TABLE IF NOT EXISTS urls (short VARCHAR(8) PRIMARY KEY, original TEXT)")
+	_, err := dbs.db.Exec("CREATE TABLE IF NOT EXISTS urls (short VARCHAR(8) PRIMARY KEY, original TEXT UNIQUE)")
 	return err
 }
 
-func (dbs *DBStore) Add(ctx context.Context, url *url.URL) (string, error) {
+func (dbs *DBStore) Add(ctx context.Context, u *url.URL) (string, error) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	id := util.GenerateID(8)
 
-	_, err := dbs.db.ExecContext(ctxTimeout, "INSERT INTO urls (short, original) VALUES ($1, $2)", id, url.OriginalURL)
+	_, err := dbs.db.ExecContext(ctxTimeout, "INSERT INTO urls (short, original) VALUES ($1, $2)", id, u.OriginalURL)
 	if err != nil {
-		return "", err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			id, err := dbs.GetByOriginal(ctx, u)
+			if err != nil {
+				return "", err
+			}
+			return id, url.ErrorAlreadyExists
+		} else {
+			return "", err
+		}
 	}
-	url.ShortURL = id
+	u.ShortURL = id
 	return id, nil
 }
 
@@ -61,6 +73,28 @@ func (dbs *DBStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	}
 
 	return u, nil
+}
+
+func (dbs *DBStore) GetByOriginal(ctx context.Context, u *url.URL) (string, error) {
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	row := dbs.db.QueryRowContext(ctxTimeout, "SELECT short FROM urls WHERE original=$1", u.OriginalURL)
+	if row == nil {
+		return "", url.ErrorNotFound
+	}
+
+	err := row.Scan(&u.ShortURL)
+	if err != nil {
+		return "", err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return "", err
+	}
+
+	return u.ShortURL, nil
 }
 
 func (dbs *DBStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {

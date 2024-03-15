@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -41,13 +42,18 @@ func createShort(ctx context.Context, m *url.Manager, baseURL string) func(http.
 
 		u := url.NewURL(string(buff))
 		id, err := m.AddURL(ctx, u)
-		if err != nil {
+		if err != nil && !errors.Is(url.ErrorAlreadyExists, err) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
+		status := http.StatusCreated
+		if err != nil {
+			status = http.StatusConflict
+		}
+
 		data := []byte(baseURL + "/" + id)
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(status)
 		w.Write(data)
 	}
 }
@@ -78,11 +84,15 @@ func shorten(ctx context.Context, m *url.Manager, baseURL string) func(http.Resp
 
 		u := url.NewURL(req.URL)
 		_, err := m.AddURL(ctx, u)
-		if err != nil {
+		if err != nil && !errors.Is(url.ErrorAlreadyExists, err) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		println(u.ShortURL)
+
+		status := http.StatusCreated
+		if err != nil {
+			status = http.StatusConflict
+		}
 
 		res := NewShortenResponse(u, baseURL)
 		resp, err := json.Marshal(res)
@@ -92,7 +102,7 @@ func shorten(ctx context.Context, m *url.Manager, baseURL string) func(http.Resp
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(status)
 		w.Write(resp)
 	}
 }

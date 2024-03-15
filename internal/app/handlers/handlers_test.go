@@ -136,7 +136,7 @@ func TestGoToIDHandler(t *testing.T) {
 			},
 			want: want{
 				code:     http.StatusBadRequest,
-				response: "id not found\n",
+				response: "url not found\n",
 				headers:  map[string]string{},
 			},
 		},
