@@ -1,8 +1,22 @@
 package url
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
-	ErrorNotFound      = errors.New("url not found")
-	ErrorAlreadyExists = errors.New("original url already exists")
+	ErrNotFound = errors.New("url not found")
 )
+
+type AlreadyExistsError struct {
+	ID string
+}
+
+func (err *AlreadyExistsError) Error() string {
+	return fmt.Sprintf("original url already exists with id '%s'", err.ID)
+}
+
+func NewAlreadyExistsError(id string) *AlreadyExistsError {
+	return &AlreadyExistsError{ID: id}
+}

@@ -42,13 +42,15 @@ func createShort(ctx context.Context, m *url.Manager, baseURL string) func(http.
 
 		u := url.NewURL(string(buff))
 		id, err := m.AddURL(ctx, u)
-		if err != nil && !errors.Is(url.ErrorAlreadyExists, err) {
+		var existsErr *url.AlreadyExistsError
+		if err != nil && !errors.As(err, &existsErr) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		status := http.StatusCreated
-		if err != nil {
+		if existsErr != nil {
+			id = existsErr.ID
 			status = http.StatusConflict
 		}
 
@@ -84,13 +86,14 @@ func shorten(ctx context.Context, m *url.Manager, baseURL string) func(http.Resp
 
 		u := url.NewURL(req.URL)
 		_, err := m.AddURL(ctx, u)
-		if err != nil && !errors.Is(url.ErrorAlreadyExists, err) {
+		var existsErr *url.AlreadyExistsError
+		if err != nil && !errors.As(err, &existsErr) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		status := http.StatusCreated
-		if err != nil {
+		if existsErr != nil {
 			status = http.StatusConflict
 		}
 

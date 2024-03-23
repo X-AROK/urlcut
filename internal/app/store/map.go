@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/X-AROK/urlcut/internal/app/url"
@@ -23,7 +24,7 @@ func (s *MapStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	s.mx.Unlock()
 
 	if !ok {
-		return v, url.ErrorNotFound
+		return v, url.ErrNotFound
 	}
 	return v, nil
 }
@@ -41,7 +42,7 @@ func (s *MapStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
 	for _, u := range *urls {
 		_, err := s.Add(ctx, u)
 		if err != nil {
-			return err
+			return fmt.Errorf("add to map error: %w", err)
 		}
 	}
 

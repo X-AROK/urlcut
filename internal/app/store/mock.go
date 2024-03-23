@@ -17,7 +17,7 @@ func (s MockStore) Get(ctx context.Context, id string) (*url.URL, error) {
 		return &url.URL{ShortURL: "test", OriginalURL: "https://practicum.yandex.ru"}, nil
 	}
 
-	return &url.URL{}, url.ErrorNotFound
+	return &url.URL{}, url.ErrNotFound
 }
 
 func (s MockStore) Add(ctx context.Context, u *url.URL) (string, error) {

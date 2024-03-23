@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/X-AROK/urlcut/internal/app/config"
 	"github.com/X-AROK/urlcut/internal/app/handlers"
 	"github.com/X-AROK/urlcut/internal/app/logger"
@@ -34,13 +35,13 @@ func run(addr, baseURL, fileStoragePath, dsn string) error {
 	if dsn != "" {
 		_db, err := sql.Open("pgx", dsn)
 		if err != nil {
-			return err
+			return fmt.Errorf("sql open error: %w", err)
 		}
 		defer _db.Close()
 
 		dbs, err := store.NewDBStore(_db)
 		if err != nil {
-			return err
+			return fmt.Errorf("create db store error: %w", err)
 		}
 
 		s = dbs
@@ -48,7 +49,7 @@ func run(addr, baseURL, fileStoragePath, dsn string) error {
 	} else if fileStoragePath != "" {
 		fs, err := store.NewFileStore(fileStoragePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("create file store error: %w", err)
 		}
 		defer fs.Close()
 		s = fs

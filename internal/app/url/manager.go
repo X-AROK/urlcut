@@ -19,6 +19,5 @@ func (m *Manager) AddURLsBatch(ctx context.Context, urls *URLsBatch) error {
 }
 
 func (m *Manager) GetURL(ctx context.Context, id string) (*URL, error) {
-	url, err := m.s.Get(ctx, id)
-	return url, err
+	return m.s.Get(ctx, id)
 }

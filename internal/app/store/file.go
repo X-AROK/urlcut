@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ type fileWriter struct {
 func newFileWriter(fname string) (*fileWriter, error) {
 	file, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("file open error: %w", err)
 	}
 
 	return &fileWriter{
@@ -51,7 +52,7 @@ func (fs *FileStore) Add(ctx context.Context, url *url.URL) (string, error) {
 	err := fs.writer.WriteRecord(url)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("write record error: %w", err)
 	}
 
 	fs.mx.Lock()
@@ -65,7 +66,7 @@ func (fs *FileStore) AddBatch(ctx context.Context, urls *url.URLsBatch) error {
 	for _, u := range *urls {
 		_, err := fs.Add(ctx, u)
 		if err != nil {
-			return err
+			return fmt.Errorf("add to file store error: %w", err)
 		}
 	}
 
@@ -78,7 +79,7 @@ func (fs *FileStore) Get(ctx context.Context, id string) (*url.URL, error) {
 	fs.mx.Unlock()
 
 	if !ok {
-		return v, url.ErrorNotFound
+		return v, url.ErrNotFound
 	}
 	return v, nil
 }
@@ -86,7 +87,7 @@ func (fs *FileStore) Get(ctx context.Context, id string) (*url.URL, error) {
 func (fs *FileStore) parse(fname string) error {
 	data, err := os.ReadFile(fname)
 	if err != nil {
-		return err
+		return fmt.Errorf("read file error: %w", err)
 	}
 
 	decoder := json.NewDecoder(bytes.NewBuffer(data))
@@ -97,7 +98,7 @@ func (fs *FileStore) parse(fname string) error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			return fmt.Errorf("json decode error: %w", err)
 		}
 		fs.values[url.ShortURL] = url
 	}
@@ -122,7 +123,7 @@ func NewFileStore(fname string) (*FileStore, error) {
 
 	writer, err := newFileWriter(fname)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create file writer error: %w", err)
 	}
 
 	fs := &FileStore{
@@ -130,7 +131,7 @@ func NewFileStore(fname string) (*FileStore, error) {
 		writer: writer,
 	}
 	if err := fs.parse(fname); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("file parse error: %w", err)
 	}
 
 	return fs, nil
