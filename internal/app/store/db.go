@@ -42,11 +42,11 @@ func (dbs *DBStore) migrate() error {
 }
 
 func (dbs *DBStore) Add(ctx context.Context, u *url.URL) (string, error) {
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	id := util.GenerateID(8)
 
-	_, err := dbs.db.ExecContext(ctxTimeout, "INSERT INTO urls (short, original) VALUES ($1, $2)", id, u.OriginalURL)
+	_, err := dbs.db.ExecContext(ctx, "INSERT INTO urls (short, original) VALUES ($1, $2)", id, u.OriginalURL)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 		id, err := dbs.GetByOriginal(ctx, u)
@@ -63,10 +63,10 @@ func (dbs *DBStore) Add(ctx context.Context, u *url.URL) (string, error) {
 }
 
 func (dbs *DBStore) Get(ctx context.Context, id string) (*url.URL, error) {
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row := dbs.db.QueryRowContext(ctxTimeout, "SELECT short, original FROM urls WHERE short=$1", id)
+	row := dbs.db.QueryRowContext(ctx, "SELECT short, original FROM urls WHERE short=$1", id)
 	if row == nil {
 		return nil, url.ErrNotFound
 	}
@@ -86,10 +86,10 @@ func (dbs *DBStore) Get(ctx context.Context, id string) (*url.URL, error) {
 }
 
 func (dbs *DBStore) GetByOriginal(ctx context.Context, u *url.URL) (string, error) {
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row := dbs.db.QueryRowContext(ctxTimeout, "SELECT short FROM urls WHERE original=$1", u.OriginalURL)
+	row := dbs.db.QueryRowContext(ctx, "SELECT short FROM urls WHERE original=$1", u.OriginalURL)
 	if row == nil {
 		return "", url.ErrNotFound
 	}
