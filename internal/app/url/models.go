@@ -5,6 +5,8 @@ type URL struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type URLsBatch map[string]*URL
+
 func NewURL(originalURL string) *URL {
 	return &URL{ShortURL: "", OriginalURL: originalURL}
 }

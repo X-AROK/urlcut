@@ -18,10 +18,13 @@ func NewConfigFromFlags() Config {
 	var fileStoragePath string
 	flag.StringVar(&fileStoragePath, "f", "/tmp/short-url-db.json", "Файл хранилища")
 
+	var dsn string
+	flag.StringVar(&dsn, "d", "", "Строка подключения БД")
+
 	flag.Parse()
 
 	builder := NewConfigBuilder()
-	builder.WithAddr(addr).WithBaseURL(baseURL).WithLoggerLevel(level).WithFileStorage(fileStoragePath)
+	builder.WithAddr(addr).WithBaseURL(baseURL).WithLoggerLevel(level).WithFileStorage(fileStoragePath).WithDSN(dsn)
 
 	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
 		builder.WithAddr(envAddr)
@@ -34,6 +37,9 @@ func NewConfigFromFlags() Config {
 	}
 	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
 		builder.WithFileStorage(envFileStoragePath)
+	}
+	if envDSN := os.Getenv("DATABASE_DSN"); envDSN != "" {
+		builder.WithDSN(envDSN)
 	}
 
 	return builder.Build()

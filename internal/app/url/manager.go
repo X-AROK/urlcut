@@ -1,5 +1,7 @@
 package url
 
+import "context"
+
 type Manager struct {
 	s Repository
 }
@@ -8,11 +10,14 @@ func NewManager(s Repository) *Manager {
 	return &Manager{s: s}
 }
 
-func (m *Manager) AddURL(u *URL) (string, error) {
-	return m.s.Add(u)
+func (m *Manager) AddURL(ctx context.Context, u *URL) (string, error) {
+	return m.s.Add(ctx, u)
 }
 
-func (m *Manager) GetURL(id string) (*URL, error) {
-	url, err := m.s.Get(id)
-	return url, err
+func (m *Manager) AddURLsBatch(ctx context.Context, urls *URLsBatch) error {
+	return m.s.AddBatch(ctx, urls)
+}
+
+func (m *Manager) GetURL(ctx context.Context, id string) (*URL, error) {
+	return m.s.Get(ctx, id)
 }
